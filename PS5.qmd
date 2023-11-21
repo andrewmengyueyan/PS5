@@ -1,0 +1,232 @@
+---
+title: "506 PS5"
+format: html
+editor: visual
+---
+
+My Github link is <https://github.com/andrewmengyueyan/PS5.git>
+
+### Problem 1
+
+##### (a)
+
+```{r}
+nmmaps <- read.csv("E:/study/Stat 506/PS5/chicago-nmmaps.csv")
+```
+
+Data Preprocessing
+
+```{r}
+library(tidyverse)
+nmmaps$temp_c <- (nmmaps$temp-32)/1.8
+nmmaps_month <- nmmaps[c("month", "month_numeric", "temp_c", "o3", "pm10", "dewpoint")]
+nmmaps_month <- nmmaps_month %>%
+  group_by(month_numeric) %>%
+  summarise(avg_temp_c = mean(temp_c, na.rm = TRUE), avg_o3 = mean(o3, na.rm = TRUE), avg_pm10 = mean(pm10, na.rm = TRUE), avg_dewpoint = mean(dewpoint, na.rm = TRUE))
+nmmaps_month <- nmmaps_month[order(nmmaps_month$month_numeric), ]
+months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+nmmaps_month$month <- months
+season <- rep(c("Winter", "Spring", "Summer", "Autumn"), each = 3)
+nmmaps_month$season <- season
+nmmaps_month$season <- factor(nmmaps_month$season, levels = c("Winter", "Spring", "Summer", "Autumn"))
+```
+
+```{r}
+library(ggplot2)
+ggplot(nmmaps_month, aes(x = month, y = avg_temp_c, color = season, group = season)) + 
+  geom_point() + 
+  geom_line() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5)) +
+  scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", y = "Mean Monthly Temperature in Celsius", title = "Average Monthly Temperature in Chicago (1997-2000)") + 
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "yellow"))
+```
+
+##### (b)
+
+The first way of plotting: we plot the four lines/variables respectively and put them side by side.
+
+```{r}
+plot_temp <- ggplot(nmmaps_month, aes(x = month, y = avg_temp_c, color = season, group = season)) + 
+  geom_point() + 
+  geom_line() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5), plot.title = element_text(size = 7)) + 
+  scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", y = "Mean Monthly Temperature in Celsius", title = "Average Monthly Temperature in Chicago (1997-2000)") + 
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "yellow"))
+
+plot_o3 <- ggplot(nmmaps_month, aes(x = month, y = avg_o3, color = season, group = season)) + 
+  geom_point() + 
+  geom_line() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5), plot.title = element_text(size = 7)) + 
+  scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", title = "Average Monthly O3 in Chicago (1997-2000)") + 
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "yellow"))
+
+plot_pm10 <- ggplot(nmmaps_month, aes(x = month, y = avg_pm10, color = season, group = season)) + 
+  geom_point() + 
+  geom_line() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5), plot.title = element_text(size = 7)) + 
+  scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", title = "Average Monthly PM10 in Chicago (1997-2000)") + 
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "yellow"))
+
+plot_dewpoint <- ggplot(nmmaps_month, aes(x = month, y = avg_dewpoint, color = season, group = season)) + 
+  geom_point() + 
+  geom_line() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5), plot.title = element_text(size = 7)) + 
+  scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", title = "Average Monthly Dewpoint in Chicago (1997-2000)") + 
+  scale_color_manual(values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "yellow"))
+library(gridExtra)
+grid.arrange(plot_temp, plot_o3, plot_pm10, plot_dewpoint, ncol = 2)
+```
+
+Another way of plotting, we plot four lines/variables in the same canvas.
+
+```{r}
+combined_plot <- ggplot(nmmaps_month, aes(x = month)) +
+  geom_point(aes(y = avg_temp_c, shape = "avg_temp_c", group = season, color = season), size = 2) +
+  geom_line(aes(y = avg_temp_c, linetype = "avg_temp_c", group = season, color = season)) +
+  geom_point(aes(y = avg_o3, shape = "avg_o3", group = season, color = season), size = 2) +
+  geom_line(aes(y = avg_o3, linetype = "avg_o3", group = season, color = season)) +
+  geom_point(aes(y = avg_pm10, shape = "avg_pm10", group = season, color = season), size = 2) +
+  geom_line(aes(y = avg_pm10, linetype = "avg_pm10", group = season, color = season)) +
+  geom_point(aes(y = avg_dewpoint, shape = "avg_dewpoint", group = season, color = season), size = 2) +
+  geom_line(aes(y = avg_dewpoint, linetype = "avg_dewpoint", group = season, color = season)) + theme_minimal() + scale_x_discrete(limits = unique(nmmaps_month$month)) + 
+  labs(x = "Months between 1997-2000", y = "Values", title = "Average Monthly Variables in Chicago (1997-2000)") +
+  scale_shape_manual(name = "Variables", values = c("avg_temp_c" = 16, "avg_o3" = 17, "avg_pm10" = 18, "avg_dewpoint" = 25)) +
+  scale_linetype_manual(name = "Variables", values = c("avg_temp_c" = 1, "avg_o3" = 2, "avg_pm10" = 3, "avg_dewpoint" = 4)) +
+  scale_color_manual(name = "Seasons", values = c("Winter" = "blue", "Spring" = "green", "Summer" = "red", "Autumn" = "grey")) +
+  guides(shape = guide_legend(title = "Variables"), linetype = guide_legend(title = "Variables"), color = guide_legend(title = "Seasons")) +
+  labs(shape = "Variables", linetype = "Variables", color = "Seasons")
+print(combined_plot)
+```
+
+From the plot, I think that the pm10 seems to have the least seasonal trend.
+
+### Problem 2
+
+##### (a)
+
+```{r}
+# Constructor
+write_poly <- setClass("poly", slots = c(coefficients = "numeric"))
+
+# Validator
+setValidity("poly", function(object){
+  if (any(!is.numeric(object@coefficients))){
+    stop(paste("@coefficients = ", object@coefficients, "is not numeric"))
+  }
+  return(TRUE)
+})
+
+# Show Method
+setMethod("show", "poly", 
+  function(object) {
+  k <- length(object@coefficients)
+  string <- ""
+
+  for (i in 1:k) {
+    coef <- object@coefficients[i]
+    power <- k - i
+
+    if (coef == 0) {
+      next
+    }
+
+    term <- ifelse(abs(coef) == 1 && power > 0, "", abs(coef))  
+    if (power > 1) {
+      term <- paste0(term, "x^", power)
+    } else if (power == 1) {
+      term <- paste0(term, "x")
+    }
+
+    if (i > 1) {
+      string <- paste(string, ifelse(coef < 0, " - ", " + "), term)
+    } else {
+      if (coef < 0) {
+        string <- paste("-", term)
+      } else {
+        string <- term
+      }
+    }
+  }
+  cat(string, "\n")
+})
+
+# Addition
+getMethod("+")
+setMethod("+", signature("poly", "poly"), function(e1, e2) {
+  length_difference <- length(e1@coefficients) - length(e2@coefficients)
+  if (length_difference > 0) {
+    e2@coefficients <- c(rep(0, length_difference), e2@coefficients)
+  } else if (length_difference < 0) {
+    e1@coefficients <- c(rep(0, -length_difference), e1@coefficients)
+  }
+  new_coefficients <- e1@coefficients + e2@coefficients
+  new("poly", coefficients = new_coefficients)
+})
+
+# Substraction
+getMethod("-")
+setMethod("-", signature("poly", "poly"), function(e1, e2) {
+  length_difference <- length(e1@coefficients) - length(e2@coefficients)
+  if (length_difference > 0) {
+    e2@coefficients <- c(rep(0, length_difference), e2@coefficients)
+  } else if (length_difference < 0) {
+    e1@coefficients <- c(rep(0, -length_difference), e1@coefficients)
+  }
+  new_coefficients <- e1@coefficients - e2@coefficients
+  new("poly", coefficients = new_coefficients)
+})
+```
+
+##### (b)
+
+```{r}
+p1 <- write_poly(coefficients = c(3, 0, 2))
+p2 <- write_poly(coefficients = c(7, -2, -1, 17))
+p1
+p2
+p1 + p2
+p1 - p2
+```
+
+### Problem 3
+
+##### (a)
+
+```{r}
+library(nycflights13)
+library(data.table)
+```
+
+```{r}
+data("flights")
+```
+
+```{r}
+dt <- data.table(flights)
+table1 <- dt[, .(mean_dep_delay = mean(dep_delay, na.rm = TRUE),
+                median_dep_delay = median(dep_delay, na.rm = TRUE)),
+            by = .(origin)]
+merge(table1, airports, by.x = "origin", by.y = "faa", all.x = TRUE)[,.(name, mean_dep_delay, median_dep_delay)]
+```
+
+```{r}
+table2 <- dt[, .(mean_arr_delay = mean(arr_delay, na.rm = TRUE), median_arr_delay = median(arr_delay, na.rm = TRUE), count_dest = nrow(.SD)), by = .(dest)]
+table2_nolessthan10 <- table2[count_dest >= 10, .(dest, mean_arr_delay, median_arr_delay)]
+table2_replace_name <- merge(table2_nolessthan10, airports, by.x = "dest", by.y = "faa", all.x = TRUE)[, .(name = fcoalesce(name, dest), mean_arr_delay, median_arr_delay)]
+knitr::kable(table2_replace_name[order(-mean_arr_delay)])
+```
+
+##### (b)
+
+```{r}
+dt$Speed <- dt$distance / (dt$air_time / 60)
+dt_with_Speed_join <- merge(dt, planes, by = "tailnum", all.x = TRUE)
+table_3 <- dt_with_Speed_join[, .(AvgSpeed = mean(Speed, na.rm = TRUE), number = .N), by = model]
+model_fastest <- table_3[order(-AvgSpeed)][1]
+knitr::kable(model_fastest)
+```
